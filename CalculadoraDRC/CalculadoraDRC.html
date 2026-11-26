@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Risco de DRC</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#f4f6f9;
+    margin:0;
+    padding:20px;
+}
+.container{
+    max-width:900px;
+    margin:auto;
+    background:white;
+    padding:25px;
+    border-radius:10px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.1);
+}
+h1{
+    color:#005792;
+}
+.section{
+    margin-bottom:20px;
+}
+label{
+    display:block;
+    margin-top:10px;
+    font-weight:bold;
+}
+input, select{
+    width:100%;
+    padding:8px;
+    margin-top:5px;
+    border:1px solid #ccc;
+    border-radius:5px;
+}
+button{
+    background:#005792;
+    color:white;
+    border:none;
+    padding:12px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    margin-top:20px;
+}
+button:hover{
+    background:#003f68;
+}
+.resultado{
+    margin-top:20px;
+    padding:15px;
+    border-radius:6px;
+    font-size:18px;
+}
+
+.kdigo-table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+    text-align:center;
+}
+
+.kdigo-table th,
+.kdigo-table td{
+    border:1px solid #ccc;
+    padding:10px;
+}
+
+.risco-baixo{
+    background:#00c853;
+    color:white;
+}
+
+.risco-moderado{
+    background:#ffd600;
+    color:black;
+}
+
+.risco-alto{
+    background:#ff6d00;
+    color:white;
+}
+
+.risco-muito-alto{
+    background:#d50000;
+    color:white;
+}
+
+.kdigo-destaque{
+    border:4px solid #000 !important;
+}
+
+.baixo{
+    background:#d4edda;
+    color:#155724;
+}
+.moderado{
+    background:#fff3cd;
+    color:#856404;
+}
+.alto{
+    background:#f8d7da;
+    color:#721c24;
+}
+.info{
+    background:#eef6ff;
+    padding:15px;
+    border-left:4px solid #005792;
+    margin-bottom:20px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>Calculadora de Risco para Doença Renal Crônica</h1>
+
+<div class="info">
+<p><strong>Objetivo:</strong> classificação e estratificação de risco de DRC.</p>
+<p><strong>Atenção:</strong> ferramenta apenas educativa. Utilizar junto a protocolos clínicos e avaliação médica.</p>
+</div>
+
+<div class="section">
+
+<label>Idade (anos)</label>
+<input type="number" id="idade">
+
+<label>Hipertensão Arterial</label>
+<select id="hipertensao">
+    <option value="0">Não</option>
+    <option value="1">Sim</option>
+</select>
+
+<label>Diabetes Mellitus</label>
+<select id="diabetes">
+    <option value="0">Não</option>
+    <option value="1">Sim</option>
+</select>
+
+<label>Pressão Arterial Sistólica (mmHg)</label>
+<input type="number" id="pas">
+
+<label>Hemoglobina Glicada HbA1c (%)</label>
+<input type="number" step="0.1" id="hba1c">
+
+<label>Creatinina sérica (mg/dL)</label>
+<input type="number" step="0.01" id="creatinina">
+
+<label>Sexo</label>
+<select id="sexo">
+    <option value="F">Feminino</option>
+    <option value="M">Masculino</option>
+</select>
+
+<label>Albuminúria (mg/g)</label>
+<input type="number" id="albuminuria">
+
+<label>Tabagismo</label>
+<select id="tabagismo">
+    <option value="0">Não</option>
+    <option value="1">Sim</option>
+</select>
+
+</div>
+
+<button onclick="calcular()">Calcular Risco</button>
+
+<div id="resultado"></div>
+
+</div>
+
+<script>
+function obterRiscoKDIGO(estagio, albumCategoria){
+
+    const mapa = {
+        "G1": {A1:"baixo", A2:"moderado", A3:"alto"},
+        "G2": {A1:"baixo", A2:"moderado", A3:"alto"},
+        "G3a": {A1:"moderado", A2:"alto", A3:"muito-alto"},
+        "G3b": {A1:"alto", A2:"muito-alto", A3:"muito-alto"},
+        "G4": {A1:"muito-alto", A2:"muito-alto", A3:"muito-alto"},
+        "G5": {A1:"muito-alto", A2:"muito-alto", A3:"muito-alto"}
+    };
+
+    return mapa[estagio][albumCategoria];
+}
+
+ function classeKDIGO(nome){
+
+    switch(nome){
+        case "baixo":
+            return "risco-baixo";
+
+        case "moderado":
+            return "risco-moderado";
+
+        case "alto":
+            return "risco-alto";
+
+        default:
+            return "risco-muito-alto";
+    }
+}
+
+function calcularTFG_CKD_EPI_2021(creatinina, idade, sexo){
+
+    let k, alfa, fatorSexo;
+
+    if(sexo === "F"){
+        k = 0.7;
+        alfa = -0.241;
+        fatorSexo = 1.012;
+    }else{
+        k = 0.9;
+        alfa = -0.302;
+        fatorSexo = 1.0;
+    }
+
+    const min = Math.min(creatinina / k, 1);
+    const max = Math.max(creatinina / k, 1);
+
+    const tfg =
+        142 *
+        Math.pow(min, alfa) *
+        Math.pow(max, -1.200) *
+        Math.pow(0.9938, idade) *
+        fatorSexo;
+
+    return tfg;
+}
+
+function calcular(){
+    
+    let score = 0;
+
+    let idade = Number(document.getElementById("idade").value);
+    let hipertensao = Number(document.getElementById("hipertensao").value);
+    let diabetes = Number(document.getElementById("diabetes").value);
+    let pas = Number(document.getElementById("pas").value);
+    let hba1c = Number(document.getElementById("hba1c").value);
+    let creatinina = Number(document.getElementById("creatinina").value);
+    let sexo = document.getElementById("sexo").value;
+    let tfg = calcularTFG_CKD_EPI_2021(
+        creatinina,
+        idade,
+        sexo
+    );
+    let albuminuria = Number(document.getElementById("albuminuria").value);
+    let tabagismo = Number(document.getElementById("tabagismo").value);
+
+    if(idade >= 60) score += 2;
+    else if(idade >= 45) score += 1;
+
+    if(hipertensao) score += 2;
+    if(diabetes) score += 3;
+
+    if(pas >= 140) score += 2;
+
+    if(hba1c >= 8) score += 2;
+
+    if(tfg < 60) score += 4;
+    else if(tfg < 90) score += 2;
+
+    if(albuminuria >= 300) score += 4;
+    else if(albuminuria >= 30) score += 2;
+
+    if(tabagismo) score += 1;
+
+    let classe = "";
+    let texto = "";
+    let estagio = "";
+
+    if(tfg >= 90) estagio = "G1";
+    else if(tfg >= 60) estagio = "G2";
+    else if(tfg >= 45) estagio = "G3a";
+    else if(tfg >= 30) estagio = "G3b";
+    else if(tfg >= 15) estagio = "G4";
+    else estagio = "G5";
+
+    let albumCategoria = "";
+
+    if(albuminuria < 30){
+        albumCategoria = "A1";
+    }
+    else if(albuminuria < 300){
+        albumCategoria = "A2";
+    }
+    else{
+        albumCategoria = "A3";
+    }
+
+    let riscoKDIGO =
+        obterRiscoKDIGO(estagio, albumCategoria);
+
+    if(score <= 5){
+        classe = "baixo";
+        texto = "BAIXO RISCO";
+    }
+    else if(score <= 10){
+        classe = "moderado";
+        texto = "RISCO MODERADO";
+    }
+    else{
+        classe = "alto";
+        texto = "ALTO RISCO";
+    }
+
+    let recomendacao = "";
+
+    switch(riscoKDIGO){
+
+        case "baixo":
+            recomendacao =
+            "Baixo risco. Reavaliação anual da função renal.";
+            break;
+
+        case "moderado":
+            recomendacao =
+            "Risco moderado. Monitorização semestral.";
+            break;
+
+        case "alto":
+            recomendacao =
+            "Alto risco. Considerar encaminhamento para nefrologia.";
+            break;
+
+        default:
+            recomendacao =
+            "Muito alto risco. Encaminhamento para nefrologia recomendado.";
+    }
+
+    document.getElementById("resultado").innerHTML = `
+    <div class="resultado ${classe}">
+        <strong>Resultado:</strong> ${texto}<br><br>
+
+        <strong>eGFR / TFG CKD-EPI 2021:</strong>
+        ${tfg.toFixed(1)} mL/min/1,73m²<br>
+
+        <strong>Estágio KDIGO:</strong> ${estagio}<br>
+
+        <strong>Albuminúria:</strong> ${albumCategoria}<br>
+
+        <strong>Risco KDIGO:</strong>
+        ${riscoKDIGO.toUpperCase()}<br>
+
+        <strong>Pontuação:</strong> ${score}
+
+        <strong>Conduta sugerida:</strong><br>
+        ${recomendacao}<br><br>
+    </div>
+
+    <table class="kdigo-table">
+
+    <tr>
+        <th></th>
+        <th>A1<br><30</th>
+        <th>A2<br>30-300</th>
+        <th>A3<br>>300</th>
+    </tr>
+
+    <tr>
+        <th>G1</th>
+        <td class="risco-baixo ${estagio==='G1' && albumCategoria==='A1' ? 'kdigo-destaque' : ''}"></td>
+        <td class="risco-moderado ${estagio==='G1' && albumCategoria==='A2' ? 'kdigo-destaque' : ''}"></td>
+        <td class="risco-alto ${estagio==='G1' && albumCategoria==='A3' ? 'kdigo-destaque' : ''}"></td>
+    </tr>
+
+    <tr>
+        <th>G2</th>
+        <td class="risco-baixo ${estagio==='G2' && albumCategoria==='A1' ? 'kdigo-destaque' : ''}"></td>
+        <td class="risco-moderado ${estagio==='G2' && albumCategoria==='A2' ? 'kdigo-destaque' : ''}"></td>
+        <td class="risco-alto ${estagio==='G2' && albumCategoria==='A3' ? 'kdigo-destaque' : ''}"></td>
+    </tr>
+
+    <tr>
+        <th>G3a</th>
+        <td class="risco-moderado ${estagio==='G3a' && albumCategoria==='A1' ? 'kdigo-destaque' : ''}"></td>
+        <td class="risco-alto ${estagio==='G3a' && albumCategoria==='A2' ? 'kdigo-destaque' : ''}"></td>
+        <td class="risco-muito-alto ${estagio==='G3a' && albumCategoria==='A3' ? 'kdigo-destaque' : ''}"></td>
+    </tr>
+
+    <tr>
+        <th>G3b</th>
+        <td class="risco-alto ${estagio==='G3b' && albumCategoria==='A1' ? 'kdigo-destaque' : ''}"></td>
+        <td class="risco-muito-alto ${estagio==='G3b' && albumCategoria==='A2' ? 'kdigo-destaque' : ''}"></td>
+        <td class="risco-muito-alto ${estagio==='G3b' && albumCategoria==='A3' ? 'kdigo-destaque' : ''}"></td>
+    </tr>
+
+    <tr>
+        <th>G4</th>
+        <td class="risco-muito-alto ${estagio==='G4' && albumCategoria==='A1' ? 'kdigo-destaque' : ''}"></td>
+        <td class="risco-muito-alto ${estagio==='G4' && albumCategoria==='A2' ? 'kdigo-destaque' : ''}"></td>
+        <td class="risco-muito-alto ${estagio==='G4' && albumCategoria==='A3' ? 'kdigo-destaque' : ''}"></td>
+    </tr>
+
+    <tr>
+        <th>G5</th>
+        <td class="risco-muito-alto ${estagio==='G5' && albumCategoria==='A1' ? 'kdigo-destaque' : ''}"></td>
+        <td class="risco-muito-alto ${estagio==='G5' && albumCategoria==='A2' ? 'kdigo-destaque' : ''}"></td>
+        <td class="risco-muito-alto ${estagio==='G5' && albumCategoria==='A3' ? 'kdigo-destaque' : ''}"></td>
+    </tr>
+
+    </table>
+    `;
+}
+
+</script>
+
+</body>
+</html>
