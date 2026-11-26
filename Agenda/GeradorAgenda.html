@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Agenda Anual</title>
+
+<style>
+@page {
+    size: A4;
+    margin: 1cm;
+}
+
+body{
+    font-family: Arial, sans-serif;
+    margin:0;
+    padding:0;
+}
+
+.pagina{
+    min-height:100vh;
+    padding:10px;
+    box-sizing:border-box;
+    page-break-after:always;
+}
+
+.cabecalho{
+    display:grid;
+    grid-template-columns: 1fr auto;
+    align-items:start;
+    margin-bottom:15px;
+}
+
+.info-topo{
+    display:flex;
+    align-items:center;
+    gap:15px;
+}
+
+.importante{
+    background:#b8d9e8;
+    color:#333;
+    font-size:14px;
+    font-weight:bold;
+    padding:8px 20px;
+    min-width:180px;
+}
+
+.data-topo{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+}
+
+.mes-container{
+    display:flex;
+    flex-direction:column;
+}
+
+.mes{
+    font-size:35pt;
+    font-weight:bold;
+    margin-bottom:15px;
+    color:#2f7f9f;
+    line-height:1;
+}
+
+.linha-mes{
+    width:110px;
+    border-bottom:2px solid #2f7f9f;
+    margin-top:4px;
+}
+
+.dia{
+    font-size:50pt;
+    font-weight:bold;
+    color:#2f7f9f;
+    margin-bottom:15px;
+    line-height:1;
+}
+
+.ano{
+    font-size:38pt;
+    font-weight:bold;
+}
+
+.dia-semana{
+    
+    font-size:40pt;
+    font-weight:bold;
+    margin-bottom:15px;
+    line-height:1;
+}
+
+.periodo{
+    text-align:center;
+    font-size:30pt;
+    font-weight:bold;
+    margin:15px 0;
+}
+
+.linha{
+    border-bottom:1px solid #000;
+    height:22px;
+    margin-bottom:12px;
+}
+
+.horario{
+    display:flex;
+    margin-bottom:12px;
+}
+
+.hora{
+    width:110px;
+    font-weight:bold;
+}
+
+.traco{
+    flex:1;
+    border-bottom:1px solid #000;
+}
+</style>
+
+</head>
+<body>
+
+<div id="agenda"></div>
+
+<script>
+
+const ano = parseInt(prompt("Digite o ano da agenda:", new Date().getFullYear()));
+
+if (!ano || ano < 1) {
+    alert("Ano inválido.");
+    throw new Error("Ano inválido.");
+}
+
+const meses = [
+    "Janeiro","Fevereiro","Março","Abril",
+    "Maio","Junho","Julho","Agosto",
+    "Setembro","Outubro","Novembro","Dezembro"
+];
+
+const diasSemana = [
+    "Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"
+];
+
+const horariosManha = [
+    "08:00 hs",
+    "08:30 hs",
+    "09:00 hs",
+    "09:30 hs",
+    "10:00 hs",
+    "10:30 hs"
+];
+
+const horariosTarde = [
+    "13:30 hs",
+    "14:00 hs",
+    "14:30 hs",
+    "15:00 hs",
+    "15:30 hs",
+    "16:00 hs"
+];
+
+const agenda = document.getElementById("agenda");
+
+let data = new Date(ano, 0, 1);
+let fim = new Date(ano, 11, 31);
+
+while (data <= fim) {
+
+    const pagina = document.createElement("div");
+    pagina.className = "pagina";
+
+    pagina.innerHTML = `
+        <div class="cabecalho">
+            <div class="ano">${ano}</div>
+            <div class="mes">${meses[data.getMonth()]}</div>
+            <div class="dia">${data.getDate()}</div>
+        </div>
+
+        <div class="dia-semana">
+            ${diasSemana[data.getDay()]}
+        </div>
+
+        <div class="periodo">Manhã</div>
+
+        <div class="linha"></div>
+        <div class="linha"></div>
+
+        ${horariosManha.map(h => `
+            <div class="horario">
+                <div class="hora">${h}</div>
+                <div class="traco"></div>
+            </div>
+        `).join("")}
+
+        ${Array(6).fill('<div class="linha"></div>').join('')}
+
+        <div class="periodo">Tarde</div>
+
+        ${horariosTarde.map(h => `
+            <div class="horario">
+                <div class="hora">${h}</div>
+                <div class="traco"></div>
+            </div>
+        `).join("")}
+    `;
+
+    agenda.appendChild(pagina);
+
+    data.setDate(data.getDate() + 1);
+}
+
+document.title = `Agenda_${ano}`;
+
+</script>
+
+</body>
+</html>
