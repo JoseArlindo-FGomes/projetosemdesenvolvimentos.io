@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calculadora de risco cardiovascular</title>
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#eef2f5; --card:#ffffff; --ink:#1b2a35; --muted:#5b6b78; --line:#d5dde3;
+  --accent:#0d5c7a; --accent-h:#094660; --field:#f8fafb;
+  --ok-bg:#dff3e4; --ok-ink:#14532d; --mid-bg:#fdf1cc; --mid-ink:#7a5200; --hi-bg:#fbdede; --hi-ink:#8a1c1c;
+  --err:#a12020;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#10181e; --card:#18232b; --ink:#e6edf1; --muted:#9bacb7; --line:#2d3c47;
+    --accent:#4fb3d6; --accent-h:#74c6e3; --field:#1f2d37;
+    --ok-bg:#183a25; --ok-ink:#a8e6bb; --mid-bg:#40330f; --mid-ink:#f2d98a; --hi-bg:#471c1c; --hi-ink:#f5b5b5;
+    --err:#ff9b9b;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10181e; --card:#18232b; --ink:#e6edf1; --muted:#9bacb7; --line:#2d3c47;
+  --accent:#4fb3d6; --accent-h:#74c6e3; --field:#1f2d37;
+  --ok-bg:#183a25; --ok-ink:#a8e6bb; --mid-bg:#40330f; --mid-ink:#f2d98a; --hi-bg:#471c1c; --hi-ink:#f5b5b5;
+  --err:#ff9b9b;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.5}
+.page{max-width:760px;margin:0 auto;padding:24px 16px 48px}
+header{margin-bottom:20px}
+h1{font-size:1.6rem;line-height:1.2;margin:0 0 6px;color:var(--accent)}
+header p{margin:0;color:var(--muted);font-size:.95rem}
+form{display:grid;gap:16px}
+fieldset{margin:0;border:1px solid var(--line);border-radius:10px;background:var(--card);padding:18px 20px 20px;min-width:0}
+legend{font-weight:700;font-size:1.05rem;padding:0 8px;margin-left:-8px}
+.hint{margin:0 0 14px;color:var(--muted);font-size:.88rem}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:.9rem;font-weight:600}
+input,select{width:100%;padding:10px 12px;font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:6px}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input.invalid{border-color:var(--err)}
+button{width:100%;padding:14px;border:0;border-radius:8px;background:var(--accent);color:#fff;font:inherit;font-weight:700;font-size:1rem;cursor:pointer}
+:root[data-theme="dark"] button{color:#08222d}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) button{color:#08222d}}
+button:hover{background:var(--accent-h)}
+#erro{color:var(--err);font-size:.9rem;margin:0;min-height:1.2em}
+.resultado{margin-top:4px;border-radius:10px;padding:20px;text-align:center}
+.resultado h2{margin:0;font-size:2.2rem}
+.resultado h3{margin:4px 0 10px}
+.resultado p{margin:6px 0}
+.baixo{background:var(--ok-bg);color:var(--ok-ink)}
+.intermediario{background:var(--mid-bg);color:var(--mid-ink)}
+.alto{background:var(--hi-bg);color:var(--hi-ink)}
+.tabela{overflow-x:auto;margin-top:12px}
+table{width:100%;border-collapse:collapse;text-align:left}
+th,td{padding:8px 10px;border:1px solid currentColor;border-color:color-mix(in srgb,currentColor 30%,transparent)}
+.aviso{font-size:.82rem;color:var(--muted);margin:20px 0 0;text-align:center}
+@media (max-width:560px){.grid{grid-template-columns:1fr}.page{padding:16px 12px 40px}fieldset{padding:16px}}
+</style>
+</head>
+<body>
+<main class="page">
+<header>
+  <h1>Calculadora de risco cardiovascular</h1>
+  <p>Preencha as três etapas. O escore de Framingham só é calculado quando a triagem exige.</p>
+</header>
+
+<form onsubmit="return false">
+
+<fieldset>
+  <legend>1. Triagem inicial</legend>
+  <div class="grid">
+    <div class="field"><label for="has">Hipertensão arterial?</label>
+      <select id="has"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+    <div class="field"><label for="obesidade">Obesidade?</label>
+      <select id="obesidade"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+    <div class="field"><label for="sedentarismo">Sedentarismo?</label>
+      <select id="sedentarismo"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+    <div class="field"><label for="historiaFamiliar">História familiar de doença arterial coronária?</label>
+      <select id="historiaFamiliar"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+    <div class="field"><label for="fumante">Fumante?</label>
+      <select id="fumante"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend>2. Condições de alto risco</legend>
+  <p class="hint">Qualquer resposta “Sim” classifica o paciente como alto risco.</p>
+  <div class="grid">
+    <div class="field"><label for="dm">Diabetes mellitus?</label>
+      <select id="dm"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+    <div class="field"><label for="avc">AVC prévio?</label>
+      <select id="avc"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+    <div class="field"><label for="iam">IAM prévio?</label>
+      <select id="iam"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+    <div class="field"><label for="ait">AIT (Ataque Isquemico Transitorio)?</label>
+      <select id="ait"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+    <div class="field"><label for="loa">Lesão de órgão-alvo?</label>
+      <select id="loa"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+    <div class="field"><label for="hve">HVE (Hipertrofia de Ventriculo Esquerdo)?</label>
+      <select id="hve"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+    <div class="field"><label for="nefropatia">Nefropatia?</label>
+      <select id="nefropatia"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+    <div class="field"><label for="retinopatia">Retinopatia?</label>
+      <select id="retinopatia"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+    <div class="field"><label for="aaa">Aneurisma de aorta abdominal?</label>
+      <select id="aaa"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+    <div class="field"><label for="carotida">Estenose carotídea sintomática?</label>
+      <select id="carotida"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend>3. Escore de Framingham</legend>
+  <div class="grid">
+    <div class="field"><label for="sexo">Sexo</label>
+      <select id="sexo"><option value="M">Masculino</option><option value="F">Feminino</option></select></div>
+    <div class="field"><label for="idade">Idade (anos)</label>
+      <input type="number" id="idade" inputmode="numeric" min="20" max="120"></div>
+    <div class="field"><label for="colesterol">Colesterol total (mg/dL)</label>
+      <input type="number" id="colesterol" inputmode="numeric" min="50" max="600"></div>
+    <div class="field"><label for="hdl">HDL (mg/dL)</label>
+      <input type="number" id="hdl" inputmode="numeric" min="10" max="200"></div>
+    <div class="field"><label for="pas">Pressão sistólica (mmHg)</label>
+      <input type="number" id="pas" inputmode="numeric" min="70" max="260"></div>
+    <div class="field"><label for="tratada">Hipertensão tratada?</label>
+      <select id="tratada"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+    <div class="field"><label for="peso">Peso (kg)</label>
+      <input type="number" id="peso" step="0.1" inputmode="decimal" min="20" max="400"></div>
+    <div class="field"><label for="altura">Altura (m)</label>
+      <input type="number" id="altura" step="0.01" inputmode="decimal" min="0.8" max="2.5"></div>
+    <div class="field"><label for="familia">Parentes de 1º grau com DAC prematura</label>
+      <select id="familia"><option value="0">Nenhum</option><option value="1">Um</option><option value="2">Mais de um</option></select></div>
+    <div class="field"><label for="asiatico">Ascendência sul-asiática?</label>
+      <select id="asiatico"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+  </div>
+</fieldset>
+
+<p id="erro" role="alert"></p>
+<button type="button" onclick="calcular()">Calcular risco cardiovascular</button>
+<div id="resultado" aria-live="polite"></div>
+
+</form>
+
+<p class="aviso">Ferramenta de apoio. Não substitui o julgamento clínico; confira as regras com o protocolo oficial.</p>
+</main>
+
+<script>
+function faixaIdade(idade){
+    if(idade>=20 && idade<=39) return 0;
+    if(idade>=40 && idade<=49) return 1;
+    if(idade>=50 && idade<=59) return 2;
+    if(idade>=60 && idade<=69) return 3;
+    return 4;
+}
+function pontosIdadeHomem(i){
+    if(i<=34) return -9;
+    if(i<=39) return -4;
+    if(i<=44) return 0;
+    if(i<=49) return 3;
+    if(i<=54) return 6;
+    if(i<=59) return 8;
+    if(i<=64) return 10;
+    if(i<=69) return 11;
+    if(i<=74) return 12;
+    return 13;
+}
+function pontosIdadeMulher(i){
+    if(i<=34) return -7;
+    if(i<=39) return -3;
+    if(i<=44) return 0;
+    if(i<=49) return 3;
+    if(i<=54) return 6;
+    if(i<=59) return 8;
+    if(i<=64) return 10;
+    if(i<=69) return 12;
+    if(i<=74) return 14;
+    return 16;
+}
+function pontosHDL(hdl){
+    if(hdl>=60) return -1;
+    if(hdl>=50) return 0;
+    if(hdl>=40) return 1;
+    return 2;
+}
+function pontosColesterol(sexo,col,idade){
+    const faixa=faixaIdade(idade);
+    const homem=[[0,0,0,0,0],[4,3,2,1,0],[7,5,3,1,0],[9,6,4,2,1],[11,8,5,3,1]];
+    const mulher=[[0,0,0,0,0],[4,3,2,1,1],[8,6,4,2,1],[11,8,5,3,2],[13,10,7,4,2]];
+    let linha;
+    if(col<160) linha=0;
+    else if(col<200) linha=1;
+    else if(col<240) linha=2;
+    else if(col<280) linha=3;
+    else linha=4;
+    return sexo=="M" ? homem[linha][faixa] : mulher[linha][faixa];
+}
+function pontosFumo(sexo,fuma,idade){
+    if(!fuma) return 0;
+    const faixa=faixaIdade(idade);
+    const homem=[8,5,3,1,1];
+    const mulher=[9,7,4,2,1];
+    return sexo=="M" ? homem[faixa] : mulher[faixa];
+}
+function pontosPA(sexo,pas,tratada){
+    let linha;
+    if(pas<120) linha=0;
+    else if(pas<=129) linha=1;
+    else if(pas<=139) linha=2;
+    else if(pas<=159) linha=3;
+    else linha=4;
+    if(sexo=="M"){
+        const nt=[0,0,1,1,2];
+        const t=[0,1,2,2,3];
+        return tratada ? t[linha] : nt[linha];
+    }
+    const nt=[0,1,2,3,4];
+    const t=[0,3,4,5,6];
+    return tratada ? t[linha] : nt[linha];
+}
+function riscoHomem(p){
+    if(p<0) return 1;
+    const mapa={0:1,1:1,2:1,3:1,4:1,5:2,6:2,7:3,8:4,9:5,10:6,11:8,12:10,13:12,14:16,15:20,16:25};
+    if(p>=17) return 30;
+    return mapa[p];
+}
+function riscoMulher(p){
+    if(p<9) return 1;
+    const mapa={9:1,10:1,11:1,12:1,13:2,14:2,15:3,16:4,17:5,18:6,19:8,20:11,21:14,22:17,23:22,24:27};
+    if(p>=25) return 30;
+    return mapa[p];
+}
+
+function mostrar(css,titulo,linhas){
+    document.getElementById("resultado").innerHTML =
+      '<div class="resultado '+css+'"><h2>'+titulo+'</h2>'+
+      linhas.map(function(l){return '<p>'+l+'</p>';}).join('')+'</div>';
+}
+
+function calcular(){
+    const val=function(id){return document.getElementById(id).value;};
+    const sexo=val('sexo');
+    const idade=parseInt(val('idade'));
+    const fumante=val('fumante')==="sim";
+    const erro=document.getElementById('erro');
+    document.querySelectorAll('input.invalid').forEach(function(e){e.classList.remove('invalid');});
+    erro.textContent="";
+
+    const altoRisco=["dm","avc","iam","ait","loa","hve","nefropatia","retinopatia","aaa","carotida"]
+        .some(function(id){return val(id)==="sim";});
+
+    if(altoRisco){
+        mostrar("alto","ALTO RISCO",[
+            "Paciente possui condição de alto risco cardiovascular.",
+            "Conforme protocolo, não é necessário calcular Framingham.",
+            "Risco cardiovascular ≥ 20% em 10 anos."
+        ]);
+        return;
+    }
+
+    if(isNaN(idade)){
+        document.getElementById('idade').classList.add('invalid');
+        erro.textContent="Informe a idade para continuar.";
+        return;
+    }
+
+    let fatoresBaixo=0;
+    if(fumante) fatoresBaixo++;
+    if(val("has")==="sim") fatoresBaixo++;
+    if(val("obesidade")==="sim") fatoresBaixo++;
+    if(val("sedentarismo")==="sim") fatoresBaixo++;
+    if(sexo==="M") fatoresBaixo++;
+    if(idade>65) fatoresBaixo++;
+    if(val("historiaFamiliar")==="sim") fatoresBaixo++;
+
+    if(fatoresBaixo<=1){
+        mostrar("baixo","BAIXO RISCO",[
+            "Apenas um fator de risco baixo/intermediário identificado.",
+            "Não é necessário calcular Framingham.",
+            "Risco cardiovascular &lt; 10%."
+        ]);
+        return;
+    }
+
+    const campos=["colesterol","hdl","pas","peso","altura"];
+    const faltando=campos.filter(function(id){return isNaN(parseFloat(val(id)));});
+    if(faltando.length){
+        faltando.forEach(function(id){document.getElementById(id).classList.add('invalid');});
+        erro.textContent="Preencha os campos destacados para calcular o escore de Framingham.";
+        return;
+    }
+
+    const colesterol=parseInt(val('colesterol'));
+    const hdl=parseInt(val('hdl'));
+    const pas=parseInt(val('pas'));
+    const tratada=val('tratada')==="sim";
+    const peso=parseFloat(val('peso'));
+    const altura=parseFloat(val('altura'));
+    const familia=parseInt(val('familia'));
+    const asiatico=val('asiatico')==="sim";
+
+    let pontos=0;
+    pontos += sexo==="M" ? pontosIdadeHomem(idade) : pontosIdadeMulher(idade);
+    pontos += pontosColesterol(sexo,colesterol,idade);
+    pontos += pontosFumo(sexo,fumante,idade);
+    pontos += pontosHDL(hdl);
+    pontos += pontosPA(sexo,pas,tratada);
+
+    let risco = sexo==="M" ? riscoHomem(pontos) : riscoMulher(pontos);
+    const imc=peso/(altura*altura);
+
+    if(familia===1) risco*=1.5;
+    if(familia===2) risco*=2.0;
+    if(asiatico) risco*=1.4;
+    if(imc>=30) risco*=1.3;
+    if(risco>30) risco=30;
+
+    let classe, css, metaPA, metaLDL, metaCTHDL;
+    if(risco<10){
+        classe="BAIXO RISCO"; css="baixo";
+        metaPA="&lt; 140/80 mmHg"; metaLDL="&lt; 160 mg/dL"; metaCTHDL="&lt; 6";
+    } else if(risco<=20){
+        classe="RISCO INTERMEDIÁRIO"; css="intermediario";
+        metaPA="&lt; 140/80 mmHg"; metaLDL="&lt; 130 mg/dL"; metaCTHDL="&lt; 5";
+    } else {
+        classe="ALTO RISCO"; css="alto";
+        metaPA="&lt; 135/85 mmHg"; metaLDL="&lt; 100 mg/dL"; metaCTHDL="&lt; 4";
+    }
+
+    document.getElementById("resultado").innerHTML =
+      '<div class="resultado '+css+'">'+
+      '<h2>'+risco.toFixed(1)+'%</h2><h3>'+classe+'</h3>'+
+      '<p><strong>Pontuação:</strong> '+pontos+' &nbsp; <strong>IMC:</strong> '+imc.toFixed(1)+'</p>'+
+      '<h3>Metas terapêuticas do protocolo</h3>'+
+      '<div class="tabela"><table>'+
+      '<tr><th>Parâmetro</th><th>Meta</th></tr>'+
+      '<tr><td>Pressão arterial</td><td>'+metaPA+'</td></tr>'+
+      '<tr><td>LDL</td><td>'+metaLDL+'</td></tr>'+
+      '<tr><td>CT/HDL</td><td>'+metaCTHDL+'</td></tr>'+
+      '</table></div>'+
+      '<p>Probabilidade estimada de evento cardiovascular nos próximos 10 anos.</p></div>';
+}
+</script>
+</body>
+</html>
